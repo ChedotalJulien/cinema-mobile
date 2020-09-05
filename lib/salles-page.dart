@@ -37,7 +37,7 @@ class _SallesPageState extends State<SallesPage> {
                         child: Padding(
                           padding: EdgeInsets.all(8.0),
                           child: RaisedButton(
-                            color: Colors.orange,
+                            color: Colors.deepOrange,
                             child: Text(
                               this.listSalles[index]['name'],
                               style: TextStyle(color: Colors.white),
@@ -56,15 +56,17 @@ class _SallesPageState extends State<SallesPage> {
                             children: <Widget>[
                               Image.network(AppUtil.host +
                                   "/imageFilm/${this
-                                      .listSalles[index]['currentProjections']['film']['id']}",
+                                      .listSalles[index]['currentProjection']['film']['id']}",
                                 width: 140,
                               ),
                               Column(
                                 children: <Widget>[
                                   ...this.listSalles[index]['projections'].map((projection) {
                                     return RaisedButton(
-                                      color: Colors.deepOrange,
-                                      child: Text(
+                                      color:(this.listSalles[index]['currentProjection']['id'] == projection['id'])
+                                      ?Colors.deepOrange : Colors.green ,
+                                      child:
+                                    Text(
                                         "${projection['seance']['heureDebut']} ("
                                             "Duree:${projection['film']['duree']}  "
                                             "Prix:${projection['prix']}F )",
@@ -83,28 +85,90 @@ class _SallesPageState extends State<SallesPage> {
                           ),
                         ),
                       if(this.listSalles[index]['currentProjection'] !=null &&
-                          this.listSalles[index]['currentProjection']['listTickets'] !=null &&
-                          this.listSalles[index]['currentProjection']['listTickets'].length>0
-                      )
-                      Row(
-                        children: <Widget>[
-                             ...this.listSalles[index]['currentProjection']['listTickets'].map((ticket){
-                               return RaisedButton(
-                                 color: Colors.deepOrange,
-                                 child: Text(
-                                   "${ticket['place']['numero']}",
+                          this.listSalles[index]['currentProjection']['listTickets'] !=null
+                         )
+                        Column(
+                          children: <Widget>[
+                            Row(
+                                children: <Widget>[
+                                  Text("Le nombre de places disponibles: ${this.listSalles[index]['currentProjection']['nombrePlacesDisponibles']} ",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 18
+                                  ),)
+                                ],
+                            ),
+                               Container(
+                                 padding: EdgeInsets.fromLTRB(6, 2, 6, 3),
+                                 child: TextField(
+                                     decoration: InputDecoration(
+                                       hintText: 'Nom Du Client'
+                                     ),
+                                 ),
+                               ),
+                              Container(
+                                padding: EdgeInsets.fromLTRB(6, 2, 6, 3),
 
-                                   style: TextStyle(
-                                       color: Colors.white,
-                                       fontSize: 12
-                                   ),),
-                                 onPressed: () {
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                      hintText: 'Code Paiement'
+                                  ),
+                                ),
+                              ),
+                            Container(
+                              padding: EdgeInsets.fromLTRB(6, 2, 6, 3),
 
-                                 },
-                               );
-                             })
-                        ],
-                      ),
+                              child: TextField(
+                                decoration: InputDecoration(
+                                    hintText: 'Nombre de Tickets'
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: double.infinity,
+                              child: RaisedButton(
+                                color: Colors.green,
+                                child: Text("Payer Tickets" ,style:
+                                  TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24
+                                  ),),
+                                  onPressed:  (){
+
+                                  }
+                              ),
+                            ),
+                            Wrap(
+                              children: <Widget>[
+                                ...this.listSalles[index]['currentProjection']['listTickets'].map((ticket){
+                                  if(ticket['reservee'] == false)
+                                    return Container(
+
+                                      width: 50,
+                                      padding: EdgeInsets.all(2),
+                                      child: RaisedButton(
+
+                                        color: Colors.green,
+                                        child: Text(
+                                          "${ticket['place']['numero']}",
+
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                            fontSize: 12
+
+                                          ),),
+                                        onPressed: () {
+
+                                        },
+                                      ),
+                                    );
+                                  else return Container();
+                                })
+                              ],
+                            ),
+                          ],
+                        ),
+
                     ],
                   ));
             }),
@@ -139,7 +203,9 @@ class _SallesPageState extends State<SallesPage> {
       setState(() {
         salle['projections'] =
         json.decode(resp.body)['_embedded']['projections'];
-        salle['currentProjections'] = salle['projections'][0];
+        salle['currentProjection'] = salle['projections'][0];
+        salle['currentProjection']['listTickets'] = [];
+
       });
     }).catchError((err) {
       print(err);
@@ -156,9 +222,18 @@ class _SallesPageState extends State<SallesPage> {
         projection['listTickets'] =
         json.decode(resp.body)['_embedded']['tickets'];
         salle['currentProjection']= projection;
+        projection['nombrePlacesDisponibles'] = nombrePlacesDisponibles(projection);
       });
     }).catchError((err) {
       print(err);
     });
+  }
+  nombrePlacesDisponibles(projection){
+    int nombre = 0 ;
+    for(int i=0;i<projection['tickets'].length;i++){
+      if(projection['tickets'][i]['reservee']==false)
+        ++nombre;
+    }
+  return nombre;
   }
 }
