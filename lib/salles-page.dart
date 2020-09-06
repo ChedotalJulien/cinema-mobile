@@ -33,9 +33,11 @@ class _SallesPageState extends State<SallesPage> {
             itemBuilder: (context, index) {
               return Card(
                   color: Colors.white,
+
                   child: Column(
-                    children: <Widget>[
-                      Container(
+
+                children: <Widget>[
+                    Container(
                         width: double.infinity,
                         child: Padding(
                           padding: EdgeInsets.all(8.0),
@@ -66,6 +68,7 @@ class _SallesPageState extends State<SallesPage> {
                                 children: <Widget>[
                                   ...this.listSalles[index]['projections'].map((projection) {
                                     return RaisedButton(
+
                                       color:(this.listSalles[index]['currentProjection']['id'] == projection['id'])
                                       ?Colors.deepOrange : Colors.green ,
                                       child:
@@ -92,6 +95,7 @@ class _SallesPageState extends State<SallesPage> {
                          )
                         Column(
                           children: <Widget>[
+
                             Row(
                                 children: <Widget>[
                                   Text("Le nombre de places disponibles: ${this.listSalles[index]['currentProjection']['nombrePlacesDisponibles']} ",
@@ -157,7 +161,7 @@ class _SallesPageState extends State<SallesPage> {
                                       padding: EdgeInsets.all(2),
                                       child: RaisedButton(
 
-                                        color: (ticket['selected']!=null && ticket['selected']==true)?Colors.purpleAccent:Colors.purpleAccent[100],
+                                        color: (ticket['selected']!=null && ticket['selected']==true)?Colors.redAccent:Colors.green,
                                         child: Text(
                                           "${ticket['place']['numero']}",
 
@@ -228,7 +232,7 @@ class _SallesPageState extends State<SallesPage> {
         salle['projections'] =
         json.decode(resp.body)['_embedded']['projections'];
         salle['currentProjection'] = salle['projections'][0];
-        salle['currentProjection']['listTickets'] = [];
+        //salle['currentProjection']['listTickets'] = [];
 
       });
     }).catchError((err) {
