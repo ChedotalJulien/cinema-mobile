@@ -14,6 +14,9 @@ class SallesPage extends StatefulWidget {
 
 class _SallesPageState extends State<SallesPage> {
   List<dynamic> listSalles;
+  List<int> selectedTickets = new List<int>();
+  final nomClientController = TextEditingController();
+  final codePaiementController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +46,7 @@ class _SallesPageState extends State<SallesPage> {
                               style: TextStyle(color: Colors.white),
                             ),
                             onPressed: () {
-                              LoadProjections(this.listSalles[index]);
+                              loadProjections(this.listSalles[index]);
                             },
                           ),
                         ),
@@ -75,7 +78,7 @@ class _SallesPageState extends State<SallesPage> {
                                             fontSize: 12
                                         ),),
                                       onPressed: () {
-                                        LoadTickets(projection,this.listSalles[index]);
+                                        loadTickets(projection,this.listSalles[index]);
                                       },
                                     );
                                   })
@@ -98,43 +101,49 @@ class _SallesPageState extends State<SallesPage> {
                                   ),)
                                 ],
                             ),
-                               Container(
+                            if(selectedTickets.length>0)
+
+                              Container(
                                  padding: EdgeInsets.fromLTRB(6, 2, 6, 3),
                                  child: TextField(
                                      decoration: InputDecoration(
-                                       hintText: 'Nom Du Client'
+                                       hintText: 'Nom Du Client',
+                                         hintStyle: TextStyle(color: Colors.black,fontSize: 20),
+
+
                                      ),
+                                   controller: nomClientController,
                                  ),
                                ),
+                            if(selectedTickets.length>0)
+
                               Container(
                                 padding: EdgeInsets.fromLTRB(6, 2, 6, 3),
 
                                 child: TextField(
                                   decoration: InputDecoration(
-                                      hintText: 'Code Paiement'
+                                      hintText: 'Code Paiement' ,
+                                    hintStyle: TextStyle(color: Colors.black,fontSize: 20),
                                   ),
+                                  controller: codePaiementController,
                                 ),
                               ),
-                            Container(
-                              padding: EdgeInsets.fromLTRB(6, 2, 6, 3),
+                            if(selectedTickets.length>0)
 
-                              child: TextField(
-                                decoration: InputDecoration(
-                                    hintText: 'Nombre de Tickets'
-                                ),
-                              ),
-                            ),
                             Container(
                               width: double.infinity,
                               child: RaisedButton(
                                 color: Colors.green,
-                                child: Text("Payer Tickets" ,style:
+                                child: Text("Réserver Tickets" ,style:
                                   TextStyle(
                                     color: Colors.white,
                                     fontSize: 24
                                   ),),
                                   onPressed:  (){
-                                    //fonction reserver a faire
+                                   setState(() {
+                                     payerTickets(nomClientController.text,codePaiementController.text,
+                                     selectedTickets,index);
+                                   });
                                   }
                               ),
                             ),
@@ -148,7 +157,7 @@ class _SallesPageState extends State<SallesPage> {
                                       padding: EdgeInsets.all(2),
                                       child: RaisedButton(
 
-                                        color: Colors.green,
+                                        color: (ticket['selected']!=null && ticket['selected']==true)?Colors.purpleAccent:Colors.purpleAccent[100],
                                         child: Text(
                                           "${ticket['place']['numero']}",
 
@@ -158,7 +167,16 @@ class _SallesPageState extends State<SallesPage> {
 
                                           ),),
                                         onPressed: () {
-
+                                          setState(() {
+                                            if(ticket["selected"]!=null && ticket["selected"]==true){
+                                              ticket["selected"] = false;
+                                              selectedTickets.remove(ticket['id']);
+                                            }
+                                            else{
+                                              ticket['selected'] = true;
+                                              selectedTickets.add(ticket['id']);
+                                            }
+                                          });
                                         },
                                       ),
                                     );
@@ -182,6 +200,12 @@ class _SallesPageState extends State<SallesPage> {
     super.initState();
     loadSalles();
   }
+  @override
+  void dispose(){
+ nomClientController.dispose();
+ codePaiementController.dispose();
+ super.dispose();
+  }
 
   void loadSalles() {
     String url = this.widget.cinema['_links']['salles']['href'];
@@ -194,7 +218,7 @@ class _SallesPageState extends State<SallesPage> {
     });
   }
 
-  void LoadProjections(salle) {
+  void loadProjections(salle) {
     //String url1 = AppUtil.host + "/salles/${salle['id']}/projections?projection=p1";
     String url = salle['_links']['projections']['href']
         .toString()
@@ -213,14 +237,13 @@ class _SallesPageState extends State<SallesPage> {
   }
 
 
-  void LoadTickets(projection,salle) {
+  void loadTickets(projection,salle) {
     String url = projection['_links']['tickets']['href']
         .toString()
         .replaceAll("{?projection}", "?projection=ticketProj");
     http.get(url).then((resp) {
       setState(() {
-        projection['listTickets'] =
-        json.decode(resp.body)['_embedded']['tickets'];
+        projection['listTickets'] = json.decode(resp.body)['_embedded']['tickets'];
         salle['currentProjection']= projection;
         projection['nombrePlacesDisponibles'] = nombrePlacesDisponibles(projection);
       });
@@ -235,5 +258,17 @@ class _SallesPageState extends State<SallesPage> {
         ++nombre;
     }
   return nombre;
+  }
+
+  void payerTickets(nomClient, codePaiment,tickets, index) {
+ Map data ={"nomClient":nomClient,"codePaiement":codePaiment,"tickets":tickets};
+ String body = json.encode(data);
+ http.post(AppUtil.host+"/payerTickets",headers: {"Content-type":"application/json"},body: body)
+ .then((value) => loadTickets(this.listSalles[index]['currentProjections'],this.listSalles[index]))
+ .catchError((err){
+   print(err);
+ });
+ selectedTickets= new List<int>();
+ loadProjections(this.listSalles[index]);
   }
 }
