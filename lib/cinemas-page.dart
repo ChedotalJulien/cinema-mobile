@@ -47,6 +47,15 @@ class _CinemasPageState extends State<CinemasPage> {
                       ),
                     );
                   })),
+      floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add,color: Colors.black,),
+          backgroundColor: Colors.deepOrange,
+
+          onPressed: (){
+
+          }
+
+      ),
     );
   }
 

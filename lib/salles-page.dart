@@ -195,6 +195,14 @@ class _SallesPageState extends State<SallesPage> {
                   ));
             }),
       ),
+      floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add),
+    backgroundColor: Colors.deepOrange,
+          onPressed: (){
+
+          }
+
+      ),
     );
   }
 
